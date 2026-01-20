@@ -30,19 +30,13 @@ export async function getRecipeById(id: number): Promise<Recipe> {
 
 /* ---------------- CREATE ---------------- */
 
-export async function addRecipe(data: { name: string }) {
-  const res = await fetch(`${BASE_URL}/add`, {
+export async function addRecipe(recipe: any) {
+  const res = await fetch("https://dummyjson.com/recipes/add", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      name: data.name,
-      ingredients: ["Cheese", "Dough", "Tomato Sauce"],
-      instructions: "Bake at 220°C for 15 minutes.",
-      mealType: ["Pizza"],
-    }),
+    body: JSON.stringify(recipe),
   })
 
-  if (!res.ok) throw new Error("Failed to add recipe")
   return res.json()
 }
 

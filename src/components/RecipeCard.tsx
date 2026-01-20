@@ -25,22 +25,49 @@ const RecipeCard: React.FC<Props> = ({
 
   /* DELETE */
   const deleteMutation = useMutation({
-    mutationFn: deleteRecipe,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["recipes", page, search] })
-      showToast("Recipe deleted")
-    },
-  })
+  mutationFn: deleteRecipe,
+  onSuccess: (_, id) => {
+    queryClient.setQueryData(
+      ["recipes", page, search],
+      (oldData: any) => {
+        if (!oldData) return oldData
+
+        return {
+          ...oldData,
+          recipes: oldData.recipes.filter(
+            (r: Recipe) => r.id !== id
+          ),
+        }
+      }
+    )
+
+    showToast("Recipe deleted")
+  },
+})
+
 
   /* UPDATE */
   const updateMutation = useMutation({
-    mutationFn: updateRecipe,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["recipes", page, search] })
-      setIsEditing(false)
-      showToast("Recipe updated")
-    },
-  })
+  mutationFn: updateRecipe,
+  onSuccess: (updated) => {
+    queryClient.setQueryData(
+      ["recipes", page, search],
+      (oldData: any) => {
+        if (!oldData) return oldData
+
+        return {
+          ...oldData,
+          recipes: oldData.recipes.map((r: Recipe) =>
+            r.id === updated.id ? { ...r, name: updated.name } : r
+          ),
+        }
+      }
+    )
+
+    setIsEditing(false)
+    showToast("Recipe updated")
+  },
+})
 
   return (
     <div
