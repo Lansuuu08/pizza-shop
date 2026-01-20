@@ -15,13 +15,13 @@ const FilterBar: React.FC<Props> = ({ search, setSearch }) => {
 
   return (
     <div className="relative w-full mb-6">
-      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg">🔍</span>
+        <span className="absolute left-4 top-3 text-gray-400">🔍</span>
       <input
         type="text"
         value={localSearch}
         onChange={(e) => setLocalSearch(e.target.value)}
-        placeholder="Search pizza..."
-        className="w-full pl-10 pr-4 py-3 border rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:ring-red-400 transition"
+        placeholder="Other Recipe"
+        className="w-full pl-10 pr-4 py-3 border rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:ring-red-400 transition bg-amber-50"
       />
     </div>
   )

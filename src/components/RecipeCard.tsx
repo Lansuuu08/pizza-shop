@@ -11,11 +11,19 @@ interface Props {
   showToast: (msg: string) => void
 }
 
-const RecipeCard: React.FC<Props> = ({ recipe, page, search, onSelect, showToast }) => {
+const RecipeCard: React.FC<Props> = ({
+  recipe,
+  page,
+  search,
+  onSelect,
+  showToast,
+}) => {
   const [isEditing, setIsEditing] = useState(false)
   const [name, setName] = useState(recipe.name)
+
   const queryClient = useQueryClient()
 
+  /* DELETE */
   const deleteMutation = useMutation({
     mutationFn: deleteRecipe,
     onSuccess: () => {
@@ -24,6 +32,7 @@ const RecipeCard: React.FC<Props> = ({ recipe, page, search, onSelect, showToast
     },
   })
 
+  /* UPDATE */
   const updateMutation = useMutation({
     mutationFn: updateRecipe,
     onSuccess: () => {
@@ -35,43 +44,52 @@ const RecipeCard: React.FC<Props> = ({ recipe, page, search, onSelect, showToast
 
   return (
     <div
-      className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-transform hover:scale-[1.02] cursor-pointer overflow-hidden"
       onClick={() => onSelect(recipe.id)}
+      className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-transform hover:scale-[1.02] cursor-pointer overflow-hidden"
     >
       {recipe.image && (
         <img
           src={recipe.image}
           alt={recipe.name}
-          className="h-48 w-full object-cover transition-transform hover:scale-105"
+          className="h-48 w-full object-cover"
         />
       )}
 
       <div className="p-4 space-y-3">
+        {/* NAME */}
         {isEditing ? (
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full border rounded-xl px-3 py-2 focus:ring-2 focus:ring-red-400 outline-none transition"
+            onClick={(e) => e.stopPropagation()}
+            className="w-full border rounded-xl px-3 py-2 focus:ring-2 focus:ring-red-400 outline-none"
           />
         ) : (
           <h3 className="font-bold text-xl text-gray-800">{recipe.name}</h3>
         )}
 
+        {/* MEAL TYPE */}
         <div className="flex flex-wrap gap-2">
           {recipe.mealType?.map((type) => (
             <span
               key={type}
-              className="text-sm bg-red-100 text-red-700 px-2 py-1 rounded-full font-medium"
+              className="text-sm bg-red-100 text-red-700 px-2 py-1 rounded-full"
             >
               {type}
             </span>
           ))}
         </div>
 
-        <div className="flex gap-2 mt-2">
+        {/* ACTION BUTTONS */}
+        <div
+          className="flex gap-2 mt-2"
+          onClick={(e) => e.stopPropagation()}
+        >
           {isEditing ? (
             <button
-              onClick={() => updateMutation.mutate({ id: recipe.id, name })}
+              onClick={() =>
+                updateMutation.mutate({ id: recipe.id, name })
+              }
               className="bg-linear-to-r from-green-500 to-green-600 text-white px-4 py-1 rounded-xl hover:from-green-600 hover:to-green-700 transition"
             >
               Save

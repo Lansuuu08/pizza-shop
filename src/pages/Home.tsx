@@ -37,18 +37,20 @@ export default function Home() {
   const recipes = data?.recipes ?? []
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-100 py-10">
+    <div className="min-h-screen bg-linear-to-br from-orange-50 to-red-100 py-20">
       <div className="max-w-7xl mx-auto px-6">
 
         <Toast message={toast} />
-
+        <header className="bg-amber-50 rounded-4xl">
         <h1 className="text-4xl font-extrabold text-center mb-8">
-          🍕 Pizza Shop CRUD
+          Nice Pizza! 
         </h1>
 
         <CreatePizza page={page} search={search} showToast={showToast} />
 
         <FilterBar search={search} setSearch={setSearch} />
+
+         </header>
 
         <RecipeList
           recipes={recipes}

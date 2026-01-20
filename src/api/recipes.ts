@@ -1,59 +1,73 @@
-import axios from "axios"
-
-export interface Recipe {
-  id: number
-  name: string
-  image?: string
-  mealType?: string[]
-  ingredients?: string[]
-  instructions?: string
-}
-
-export interface RecipesResponse {
-  recipes: Recipe[]
-  total: number
-  skip: number
-  limit: number
-}
+import { Recipe } from "../types/recipe"
 
 const BASE_URL = "https://dummyjson.com/recipes"
-export const PAGE_SIZE = 6
 
-export const getRecipesPaginated = async (page: number): Promise<RecipesResponse> => {
-  const limit = PAGE_SIZE
+/* ---------------- READ ---------------- */
+
+export async function getRecipesPaginated(page: number) {
+  const limit = 6
   const skip = (page - 1) * limit
-  const { data } = await axios.get(`${BASE_URL}?limit=${limit}&skip=${skip}`)
-  return data
+
+  const res = await fetch(`${BASE_URL}?limit=${limit}&skip=${skip}`)
+  if (!res.ok) throw new Error("Failed to fetch recipes")
+
+  return res.json()
 }
 
-export const searchRecipes = async (query: string): Promise<RecipesResponse> => {
-  const q = encodeURIComponent(query)
-  const { data } = await axios.get(`${BASE_URL}/search?q=${q}`)
-  return data
+export async function searchRecipes(search: string) {
+  const res = await fetch(`${BASE_URL}/search?q=${search}`)
+  if (!res.ok) throw new Error("Failed to search recipes")
+
+  return res.json()
 }
 
-export const getRecipeById = async (id: number): Promise<Recipe> => {
-  const response = await fetch(`${BASE_URL}/${id}`)
-  if (!response.ok) throw new Error("Failed to fetch recipe")
-  return response.json()
+export async function getRecipeById(id: number): Promise<Recipe> {
+  const res = await fetch(`${BASE_URL}/${id}`)
+  if (!res.ok) throw new Error("Recipe not found")
+
+  return res.json()
 }
 
-export const addRecipe = async ({ name }: { name: string }): Promise<Recipe> => {
-  const { data } = await axios.post(`${BASE_URL}/add`, { name })
-  return data
+/* ---------------- CREATE ---------------- */
+
+export async function addRecipe(data: { name: string }) {
+  const res = await fetch(`${BASE_URL}/add`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      name: data.name,
+      ingredients: ["Cheese", "Dough", "Tomato Sauce"],
+      instructions: "Bake at 220°C for 15 minutes.",
+      mealType: ["Pizza"],
+    }),
+  })
+
+  if (!res.ok) throw new Error("Failed to add recipe")
+  return res.json()
 }
 
-export const deleteRecipe = async (id: number): Promise<void> => {
-  await axios.delete(`${BASE_URL}/${id}`)
+/* ---------------- UPDATE ---------------- */
+
+export async function updateRecipe(data: { id: number; name: string }) {
+  const res = await fetch(`${BASE_URL}/${data.id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      name: data.name,
+    }),
+  })
+
+  if (!res.ok) throw new Error("Failed to update recipe")
+  return res.json()
 }
 
-export const updateRecipe = async ({
-  id,
-  name,
-}: {
-  id: number
-  name: string
-}): Promise<Recipe> => {
-  const { data } = await axios.put(`${BASE_URL}/${id}`, { name })
-  return data
+/* ---------------- DELETE ---------------- */
+
+export async function deleteRecipe(id: number) {
+  const res = await fetch(`${BASE_URL}/${id}`, {
+    method: "DELETE",
+  })
+
+  if (!res.ok) throw new Error("Failed to delete recipe")
+  return res.json()
 }
