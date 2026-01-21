@@ -1,15 +1,23 @@
-interface Props {
-  message: string
-}
+import { useEffect } from "react"
 
-const Toast: React.FC<Props> = ({ message }) => {
-  if (!message) return null
+export default function Toast({ message, onClose }: any) {
+
+   useEffect(() => {
+    if (!message) return
+
+    const timer = setTimeout(() => {
+      onClose()
+    }, 3000)
+
+    return () => clearTimeout(timer)
+  }, [message, onClose])
 
   return (
-    <div className="fixed top-6 right-6 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg animate-pulse">
+    <div className="fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-2xl">
       {message}
+      <button onClick={onClose} className="ml-3 underline">
+        close
+      </button>
     </div>
   )
 }
-
-export default Toast

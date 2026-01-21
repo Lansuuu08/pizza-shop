@@ -1,88 +1,59 @@
-import { useState } from "react"
-import { useQuery } from "@tanstack/react-query"
-import { getRecipesPaginated, searchRecipes } from "../api/recipes"
-import RecipeList from "../components/RecipeList"
-import FilterBar from "../components/FilterBar"
+import { useState, useEffect } from "react"
+import { getRecipes } from "../api/recipes"
 import CreatePizza from "../components/CreatePizza"
-import FullRecipe from "../components/FullRecipe"
+import FilterBar from "../components/FilterBar"
+import RecipeList from "../components/RecipeList"
 import Toast from "../components/Toast"
+import FullRecipe from "../components/FullRecipe"
+import type { Recipe } from "../types/recipe"
 
 export default function Home() {
-  const [page, setPage] = useState<number>(1)
-  const [search, setSearch] = useState<string>("")
-  const [selectedId, setSelectedId] = useState<number | null>(null)
-  const [toast, setToast] = useState<string>("")
+  const [recipes, setRecipes] = useState<any[]>(() => {
+    const saved = localStorage.getItem("recipes")
+    return saved ? JSON.parse(saved) : []})
+  const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState("")
+  const [selected, setSelected] = useState<Recipe | null>(null)
+  const [toast, setToast] = useState("")
 
-  const showToast = (message: string) => {
-    setToast(message)
-    setTimeout(() => setToast(""), 2500)
-  }
+  const filtered = recipes.filter((r) =>
+    r.name.toLowerCase().includes(search.toLowerCase())
+  )
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["recipes", page, search],
-    queryFn: () =>
-      search.trim()
-        ? searchRecipes(search)
-        : getRecipesPaginated(page),
-  })
+  useEffect(() => {
+    getRecipes()
+      .then((data) => {
+        setRecipes(data)
+        setLoading(false)
+      }
+      )
+  }, [])
 
-  if (isLoading) {
-    return (
-      <p className="text-center mt-20 text-lg font-semibold">
-        Loading pizzas...
-      </p>
-    )
-  }
-
-  const recipes = data?.recipes ?? []
+  if (loading) return <p className="text-center text-5xl py-80 font-extrabold text-white bg-amber-200 min-h-screen">MANATILING NAG HIHINTAY</p>
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-orange-50 to-red-100 py-20">
-      <div className="max-w-7xl mx-auto px-6">
+    <div className="p-10 bg-amber-200 min-h-screen">
+      <hr className="p-3 mx-25 border-black"></hr>
+      <h1 className="text-8xl font-bold text-center mb-4 font-serif">
+        WHAT A NICE RECIPE!
+      </h1>
+      <hr className="p-3 border-black mx-25"></hr>
+      <CreatePizza setRecipes={setRecipes} showToast={setToast} />
 
-        <Toast message={toast} />
-        <header className="bg-amber-50 rounded-4xl">
-        <h1 className="text-4xl font-extrabold text-center mb-8">
-          Nice Pizza! 
-        </h1>
+      <FilterBar search={search} setSearch={setSearch} />
 
-        <CreatePizza page={page} search={search} showToast={showToast} />
+      <RecipeList
+        recipes={filtered}
+        setRecipes={setRecipes}
+        onSelect={setSelected}
+        showToast={setToast}
+      />
 
-        <FilterBar search={search} setSearch={setSearch} />
+      {selected && (
+        <FullRecipe recipe={selected} onClose={() => setSelected(null)} />
+      )}
 
-         </header>
-
-        <RecipeList
-          recipes={recipes}
-          page={page}
-          search={search}
-          onSelect={setSelectedId}
-          showToast={showToast}
-        />
-
-        {!search && (
-          <div className="flex justify-center gap-4 mt-10">
-            <button
-              disabled={page === 1}
-              onClick={() => setPage((p) => p - 1)}
-              className="px-4 py-2 bg-white rounded-2xl shadow hover:shadow-md disabled:opacity-40 transition"
-            >
-              ◀ Prev
-            </button>
-
-            <span className="font-semibold text-lg">Page {page}</span>
-
-            <button
-              onClick={() => setPage((p) => p + 1)}
-              className="px-4 py-2 bg-white rounded-2xl shadow hover:shadow-md transition"
-            >
-              Next ▶
-            </button>
-          </div>
-        )}
-
-        <FullRecipe recipeId={selectedId} onClose={() => setSelectedId(null)} />
-      </div>
+      {toast && <Toast message={toast} onClose={() => setToast("")} />}
     </div>
   )
 }

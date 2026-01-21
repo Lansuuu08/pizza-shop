@@ -1,27 +1,27 @@
+import type { Recipe } from "../types/recipe"
 import RecipeCard from "./RecipeCard"
-import { Recipe } from "../types/recipe"
 
-interface Props {
+type RecipeListProps = {
   recipes: Recipe[]
-  page: number
-  search: string
-  onSelect: (id: number) => void
+  setRecipes: React.Dispatch<React.SetStateAction<Recipe[]>>
+  onSelect: (r: Recipe) => void
   showToast: (msg: string) => void
 }
 
-const RecipeList: React.FC<Props> = ({ recipes, page, search, onSelect, showToast }) => {
-  if (!recipes.length) {
-    return <p className="text-center text-gray-500 mt-10 text-lg">No pizzas found.</p>
-  }
-
+export default function RecipeList({
+  recipes,
+  setRecipes,
+  onSelect,
+  showToast,
+}: RecipeListProps) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      {recipes.map((recipe) => (
+    
+    <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(240px,1fr))]">
+      {recipes.map((recipe: any) => (
         <RecipeCard
           key={recipe.id}
           recipe={recipe}
-          page={page}
-          search={search}
+          setRecipes={setRecipes}
           onSelect={onSelect}
           showToast={showToast}
         />
@@ -29,5 +29,3 @@ const RecipeList: React.FC<Props> = ({ recipes, page, search, onSelect, showToas
     </div>
   )
 }
-
-export default RecipeList

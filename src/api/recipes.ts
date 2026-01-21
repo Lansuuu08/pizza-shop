@@ -1,67 +1,65 @@
-import { Recipe } from "../types/recipe"
+import type { Recipe } from "../types/recipe"
 
-const BASE_URL = "https://dummyjson.com/recipes"
+const BASE_URL = "https://dummyjson.com"
 
-/* ---------------- READ ---------------- */
-
-export async function getRecipesPaginated(page: number) {
-  const limit = 6
-  const skip = (page - 1) * limit
-
-  const res = await fetch(`${BASE_URL}?limit=${limit}&skip=${skip}`)
-  if (!res.ok) throw new Error("Failed to fetch recipes")
-
-  return res.json()
+export async function getRecipes() {
+  const res = await fetch(`${BASE_URL}/recipes`)
+  const data = await res.json()
+  return data.recipes
 }
 
-export async function searchRecipes(search: string) {
-  const res = await fetch(`${BASE_URL}/search?q=${search}`)
-  if (!res.ok) throw new Error("Failed to search recipes")
-
-  return res.json()
-}
-
-export async function getRecipeById(id: number): Promise<Recipe> {
-  const res = await fetch(`${BASE_URL}/${id}`)
-  if (!res.ok) throw new Error("Recipe not found")
-
-  return res.json()
-}
-
-/* ---------------- CREATE ---------------- */
-
-export async function addRecipe(recipe: any) {
-  const res = await fetch("https://dummyjson.com/recipes/add", {
+export async function createRecipe(recipe: Recipe) {
+  const res = await fetch(`${BASE_URL}/recipes/add`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify(recipe),
   })
-
-  return res.json()
+  const data = await res.json()
+  return data
 }
 
-/* ---------------- UPDATE ---------------- */
-
-export async function updateRecipe(data: { id: number; name: string }) {
-  const res = await fetch(`${BASE_URL}/${data.id}`, {
+export async function updateRecipe(id: number, updates: Partial<Recipe>) {
+  const res = await fetch(`${BASE_URL}/recipes/${id}`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      name: data.name,
-    }),
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(updates),
   })
-
-  if (!res.ok) throw new Error("Failed to update recipe")
-  return res.json()
+  const data = await res.json()
+  return data
 }
-
-/* ---------------- DELETE ---------------- */
 
 export async function deleteRecipe(id: number) {
-  const res = await fetch(`${BASE_URL}/${id}`, {
+  const res = await fetch(`${BASE_URL}/recipes/${id}`, {
     method: "DELETE",
   })
+  const data = await res.json()
+  return data
+}
 
-  if (!res.ok) throw new Error("Failed to delete recipe")
-  return res.json()
+export async function getRecipeById(id: number) {
+  const res = await fetch(`${BASE_URL}/recipes/${id}`)
+  const data = await res.json()
+  return data
+}
+
+export async function searchRecipes(query: string) {
+  const res = await fetch(`${BASE_URL}/recipes/search?q=${encodeURIComponent(query)}`)
+  const data = await res.json()
+  return data.recipes
+}
+
+export async function getTags() {
+  const res = await fetch(`${BASE_URL}/recipes/tags`)
+  const data = await res.json()
+  return data.tags
+}
+
+export async function getMealTypes() {
+  const res = await fetch(`${BASE_URL}/recipes/mealTypes`)
+  const data = await res.json()
+  return data.mealTypes
 }

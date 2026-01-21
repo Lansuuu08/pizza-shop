@@ -1,30 +1,11 @@
-import { useState, useEffect } from "react"
-
-interface Props {
-  search: string
-  setSearch: (value: string) => void
-}
-
-const FilterBar: React.FC<Props> = ({ search, setSearch }) => {
-  const [localSearch, setLocalSearch] = useState(search)
-
-  useEffect(() => {
-    const timer = setTimeout(() => setSearch(localSearch), 300)
-    return () => clearTimeout(timer)
-  }, [localSearch, setSearch])
-
+export default function FilterBar({ search, setSearch }: any) {
   return (
-    <div className="relative w-full mb-6">
-        <span className="absolute left-4 top-3 text-gray-400">🔍</span>
-      <input
-        type="text"
-        value={localSearch}
-        onChange={(e) => setLocalSearch(e.target.value)}
-        placeholder="Other Recipe"
-        className="w-full pl-10 pr-4 py-3 border rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:ring-red-400 transition bg-amber-50"
-      />
-    </div>
+    <input className="border-2 w-full px-3 py-2 mb-4 rounded bg-white"
+      placeholder="Search Recipe"
+      value={search}
+      onChange={(e) => setSearch(e.target.value)}
+
+      
+    />
   )
 }
-
-export default FilterBar

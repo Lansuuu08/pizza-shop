@@ -1,145 +1,234 @@
 import { useState } from "react"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { Recipe } from "../types/recipe"
-import { deleteRecipe, updateRecipe } from "../api/recipes"
+import { deleteRecipe as deleteRecipeAPI, updateRecipe } from "../api/recipes"
+import type { Recipe } from "../types/recipe"
 
-interface Props {
+type RecipeCardProps = {
   recipe: Recipe
-  page: number
-  search: string
-  onSelect: (id: number) => void
+  setRecipes: React.Dispatch<React.SetStateAction<Recipe[]>>
+  onSelect: (r: Recipe) => void
   showToast: (msg: string) => void
 }
 
-const RecipeCard: React.FC<Props> = ({
+export default function RecipeCard({
   recipe,
-  page,
-  search,
+  setRecipes,
   onSelect,
   showToast,
-}) => {
+}: RecipeCardProps) {
   const [isEditing, setIsEditing] = useState(false)
-  const [name, setName] = useState(recipe.name)
+  const [editedRecipe, setEditedRecipe] = useState<Recipe>({ ...recipe })
+  const [confirmAction, setConfirmAction] = useState<null | "save" | "delete">(null)
 
-  const queryClient = useQueryClient()
+  const openEditModal = () => {
+    setEditedRecipe({ ...recipe })
+    setIsEditing(true)
+  }
 
-  /* DELETE */
-  const deleteMutation = useMutation({
-  mutationFn: deleteRecipe,
-  onSuccess: (_, id) => {
-    queryClient.setQueryData(
-      ["recipes", page, search],
-      (oldData: any) => {
-        if (!oldData) return oldData
+  const handleChange = (field: keyof Recipe, value: any) => {
+    setEditedRecipe((prev) => ({ ...prev, [field]: value }))
+  }
 
-        return {
-          ...oldData,
-          recipes: oldData.recipes.filter(
-            (r: Recipe) => r.id !== id
-          ),
-        }
+  const deleteRecipe = () => {
+    setConfirmAction("delete") 
+  }
+
+  const saveUpdate = () => {
+    setConfirmAction("save") 
+  }
+
+  const handleConfirm = async () => {
+    if (confirmAction === "save") {
+      if (!editedRecipe.name.trim()) return
+      try {
+        await updateRecipe(recipe.id, editedRecipe)
+        setRecipes((prev) => {
+          const updated = prev.map((r) => (r.id === recipe.id ? { ...editedRecipe } : r))
+          localStorage.setItem("recipes", JSON.stringify(updated))
+          return updated
+        })
+        setIsEditing(false)
+        showToast("Recipe updated successfully")
+      } catch (error) {
+        showToast("Failed to update recipe")
       }
-    )
-
-    showToast("Recipe deleted")
-  },
-})
-
-
-  /* UPDATE */
-  const updateMutation = useMutation({
-  mutationFn: updateRecipe,
-  onSuccess: (updated) => {
-    queryClient.setQueryData(
-      ["recipes", page, search],
-      (oldData: any) => {
-        if (!oldData) return oldData
-
-        return {
-          ...oldData,
-          recipes: oldData.recipes.map((r: Recipe) =>
-            r.id === updated.id ? { ...r, name: updated.name } : r
-          ),
-        }
+    } else if (confirmAction === "delete") {
+      try {
+        await deleteRecipeAPI(recipe.id)
+        setRecipes((prev) => {
+          const updated = prev.filter((r) => r.id !== recipe.id)
+          localStorage.setItem("recipes", JSON.stringify(updated))
+          return updated
+        })
+        showToast("Recipe deleted successfully")
+      } catch (error) {
+        showToast("Failed to delete recipe")
       }
-    )
+    }
+    setConfirmAction(null)
+  }
 
-    setIsEditing(false)
-    showToast("Recipe updated")
-  },
-})
+  const handleCancel = () => {
+    setConfirmAction(null)
+  }
 
   return (
-    <div
-      onClick={() => onSelect(recipe.id)}
-      className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-transform hover:scale-[1.02] cursor-pointer overflow-hidden"
-    >
-      {recipe.image && (
+    <>
+      <div className="bg-green-50 rounded shadow p-3 border-2 hover:scale-105 transition-transform h-full relative">
         <img
           src={recipe.image}
+          className="h-40 w-full object-cover rounded"
           alt={recipe.name}
-          className="h-48 w-full object-cover"
         />
-      )}
 
-      <div className="p-4 space-y-3">
-        {/* NAME */}
-        {isEditing ? (
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            onClick={(e) => e.stopPropagation()}
-            className="w-full border rounded-xl px-3 py-2 focus:ring-2 focus:ring-red-400 outline-none"
-          />
-        ) : (
-          <h3 className="font-bold text-xl text-gray-800">{recipe.name}</h3>
-        )}
+        <h3 className="font-bold mt-2 font-mono text-center">{recipe.name}</h3>
 
-        {/* MEAL TYPE */}
-        <div className="flex flex-wrap gap-2">
-          {recipe.mealType?.map((type) => (
-            <span
-              key={type}
-              className="text-sm bg-red-100 text-red-700 px-2 py-1 rounded-full"
-            >
-              {type}
-            </span>
-          ))}
+        <div className="text-center mt-2">
+          {recipe.tags &&
+            recipe.tags.map((tag: string, index: number) => (
+              <span
+                key={index}
+                className="inline-block bg-blue-200 text-blue-800 text-xs px-2 py-1 rounded-full mr-1 mt-1"
+              >
+                {tag}
+              </span>
+            ))}
         </div>
 
-        {/* ACTION BUTTONS */}
-        <div
-          className="flex gap-2 mt-2"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {isEditing ? (
-            <button
-              onClick={() =>
-                updateMutation.mutate({ id: recipe.id, name })
-              }
-              className="bg-linear-to-r from-green-500 to-green-600 text-white px-4 py-1 rounded-xl hover:from-green-600 hover:to-green-700 transition"
-            >
-              Save
-            </button>
-          ) : (
-            <button
-              onClick={() => setIsEditing(true)}
-              className="bg-linear-to-r from-yellow-400 to-yellow-500 text-white px-4 py-1 rounded-xl hover:from-yellow-500 hover:to-yellow-600 transition"
-            >
-              Update
-            </button>
-          )}
+        <div className="text-center mt-2">
+          {recipe.mealType &&
+            recipe.mealType.map((type: string, index: number) => (
+              <span
+                key={index}
+                className="inline-block bg-green-200 text-green-800 text-xs px-2 py-1 rounded-full mr-1 mt-1"
+              >
+                {type}
+              </span>
+            ))}
+        </div>
+
+        <div className="flex gap-2 mt-3 justify-center flex-wrap">
+          <button
+            onClick={openEditModal}
+            className="bg-yellow-400 text-white px-4 py-2 rounded hover:scale-110 transition-transform cursor-pointer"
+          >
+            Update
+          </button>
 
           <button
-            onClick={() => deleteMutation.mutate(recipe.id)}
-            className="bg-linear-to-r from-red-500 to-red-600 text-white px-4 py-1 rounded-xl hover:from-red-600 hover:to-red-700 transition"
+            onClick={deleteRecipe}
+            className="bg-red-500 text-white px-4 py-2 rounded hover:scale-110 transition-transform cursor-pointer"
           >
             Delete
           </button>
+
+          <button
+            onClick={() => onSelect(recipe)}
+            className="bg-blue-500 text-white px-4 py-2 rounded hover:scale-110 transition-transform cursor-pointer"
+          >
+            View
+          </button>
         </div>
       </div>
-    </div>
+
+      {isEditing && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-11/12 md:w-2/3 lg:w-1/2 max-h-[90vh] overflow-y-auto shadow-lg relative">
+            <h2 className="text-xl font-bold mb-4 text-center">Edit Recipe</h2>
+
+            <div className="flex flex-col gap-3">
+              <input
+                type="text"
+                placeholder="Pizza Name"
+                className="border px-2 py-1 rounded w-full"
+                value={editedRecipe.name}
+                onChange={(e) => handleChange("name", e.target.value)}
+              />
+
+              <input
+                type="text"
+                placeholder="Image URL"
+                className="border px-2 py-1 rounded w-full"
+                value={editedRecipe.image}
+                onChange={(e) => handleChange("image", e.target.value)}
+              />
+
+              <input
+                type="text"
+                placeholder="Meal Type (comma separated)"
+                className="border px-2 py-1 rounded w-full"
+                value={editedRecipe.mealType?.join(", ") || ""}
+                onChange={(e) =>
+                  handleChange(
+                    "mealType",
+                    e.target.value.split(",").map((t) => t.trim())
+                  )
+                }
+              />
+
+              <textarea
+                placeholder="Ingredients (comma separated)"
+                className="border px-2 py-1 rounded w-full"
+                value={editedRecipe.ingredients?.join(", ") || ""}
+                onChange={(e) =>
+                  handleChange(
+                    "ingredients",
+                    e.target.value.split(",").map((i) => i.trim())
+                  )
+                }
+              />
+
+              <textarea
+                placeholder="Instructions"
+                className="border px-2 py-1 rounded w-full"
+                value={editedRecipe.instructions || ""}
+                onChange={(e) => handleChange("instructions", e.target.value)}
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 mt-4">
+              <button
+                onClick={() => setIsEditing(false)}
+                className="bg-red-500 text-white px-4 py-2 rounded hover:scale-105 transition-transform cursor-pointer"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={saveUpdate}
+                className="bg-green-500 text-white px-4 py-2 rounded hover:scale-105 transition-transform cursor-pointer"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {confirmAction && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-amber-200 rounded-lg p-6 w-80 shadow-lg text-center">
+            <h3 className="text-lg font-bold mb-4">
+              {confirmAction === "save"
+                ? "Are you sure you want to save changes?"
+                : "Are you sure you want to delete this recipe?"}
+            </h3>
+            <div className="flex justify-center gap-4">
+              <button
+                onClick={handleConfirm}
+                className="bg-green-500 text-white px-4 py-2 rounded hover:scale-105 transition-transform cursor-pointer"
+              >
+                Yes
+              </button>
+              <button
+                onClick={handleCancel}
+                className="bg-red-500 text-white px-4 py-2 rounded hover:scale-105 transition-transform cursor-pointer"
+              >
+                No
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   )
 }
-
-export default RecipeCard
